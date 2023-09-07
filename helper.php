@@ -48,8 +48,8 @@ class helper_plugin_approve extends DokuWiki_Plugin {
 
         $res = $sqlite->query('SELECT page, approver FROM page WHERE page=? AND hidden=0', $id);
         $row = $sqlite->res2row($res);
+        $approver = $row['approver'];
         if ($row) {
-            $approver = $row['approver'];
             return true;
         }
         return false;
@@ -241,18 +241,7 @@ class helper_plugin_approve extends DokuWiki_Plugin {
      * @return bool
      */
     public function client_can_mark_ready_for_approval($id) {
-        global $INFO;
-
-        $ready_for_approval_acl = preg_split('/\s+/', $this->getConf('ready_for_approval_acl'), -1, PREG_SPLIT_NO_EMPTY);
-        if (count($ready_for_approval_acl) == 0) return auth_quickaclcheck($id) >= AUTH_EDIT; // empty
-        foreach ($ready_for_approval_acl as $user_or_group) {
-            if ($user_or_group[0] == '@' && $this->isInGroup($INFO['userinfo'], $user_or_group)) {
-                return true;
-            } elseif ($user_or_group == $INFO['client']) {
-                return true;
-            }
-        }
-        return false;
+        return auth_quickaclcheck($id) >= AUTH_EDIT;
     }
 
     /**
@@ -260,9 +249,6 @@ class helper_plugin_approve extends DokuWiki_Plugin {
      * @return bool
      */
     public function client_can_see_drafts($id, $pageApprover) {
-        // in view mode no one can see drafts
-        if ($this->getConf('viewmode') && get_doku_pref('approve_viewmode', false)) return false;
-
         if (!$this->getConf('hide_drafts_for_viewers')) return true;
 
         if (auth_quickaclcheck($id) >= AUTH_EDIT) return true;
